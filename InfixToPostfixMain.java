@@ -1,12 +1,14 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.ArrayList;
 
-public class Main {
+public class InfixToPostfixMain {
     public static void main(String[] args) {
         // Declare usage variables:
         String fileName;
-        String infixExpression = "";
+        ArrayList<String> inputList = new ArrayList<>();
+        Convertor convertor = new Convertor();
 
         // Argument handling and input file parsing:
         if (args.length == 0) {
@@ -22,11 +24,18 @@ public class Main {
             File file = new File(fileName);
             Scanner input = new Scanner(file);
             while (input.hasNextLine()) {
-                infixExpression = input.nextLine().replace(" ","");
+                String infixExpression = input.nextLine();
+                inputList.add(infixExpression);
             }
         } catch (FileNotFoundException e) {
             System.out.println("File name `" + fileName + "` not found");
         }
-        System.out.println(infixExpression);
+
+        convertor.getResult(inputList);
+    }
+    public static void printAllInList(ArrayList<String> list) {
+        for (String o : list) {
+            System.out.println(o);
+        }
     }
 }
