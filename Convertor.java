@@ -1,14 +1,25 @@
+/**
+ * author: Nattikorn Sae-sue, 672115014
+ * contact: nattikorn_s@cmu.ac.th
+ * files: InfixToPostfixMain.java, Convertor.java, Stack.java, and Node.java
+ */
+
 import java.util.ArrayList;
 
 public class Convertor {
 
     public void getResult(ArrayList<String> input) {
-        for (String s: input) {
-            if (isStringValidInfix(s)) {
-                System.out.println(s + " is valid.");
+        for (int i=0; i<input.size(); i++) {
+            String cleanInfix = input.get(i).replace(" ", "");
+            System.out.println("Expression " + (i+1) + ":");
+            System.out.println("Infix Expression: " + cleanInfix);
+            if (isStringValidInfix(cleanInfix)) {
+                System.out.println("Is a valid infix expression.");
+                System.out.println("Postfix Expression: " + toPostfix(cleanInfix));
             } else {
-                System.out.println(s + " is not-valid.");
+                System.out.println("Is an invalid infix expression.");
             }
+            System.out.println();
         }
     }
 
@@ -65,6 +76,82 @@ public class Convertor {
         return expression;
     }
 
+    public static String toPostfix(String infix) {
+        ArrayList<String> tokens = toStringArrayListToken(infix);
+        StringBuilder postfix = new StringBuilder();
+        Stack stack = new Stack();
+
+        for (String token : tokens) {
+            if (token.equals(" ")) {
+                continue;
+            }
+            if (isStringOpenParenthesis(token)) {
+                stack.push(token);
+            }
+            if (isStringClosingParenthesis(token)) {
+                while (!stack.isEmpty() && !isStringOpenParenthesis(stack.peek())) {
+                    postfix.append(stack.pop());
+                }
+                stack.pop(); // Remove the `(` in the stack
+            }
+            if (isStringOperand(token)) {
+                postfix.append(token);
+            }
+            if (isStringOperator(token)) {
+                if (token.equals("-") && (postfix.isEmpty() || (tokens.indexOf(token) > 0 && (isStringOpenParenthesis(tokens.get(tokens.indexOf(token) - 1)) || isStringOperator(tokens.get(tokens.indexOf(token) - 1)))))) {
+                    // unary minus treat differently
+                    stack.push("~"); // Using ~ to represent unary minus
+                }
+                else {
+                    while (!stack.isEmpty() && !isStringOpenParenthesis(stack.peek()) && hasHigherOrEqualPrecedence(stack.peek(), token)) {
+                        postfix.append(stack.pop());
+                    }
+                    stack.push(token);
+                }
+            }
+        }
+        // Pop remaining data in stack.
+        while (!stack.isEmpty()) {
+            postfix.append(stack.pop());
+        }
+
+        return postfix.toString();
+    }
+    private static int getPrecedence(String operator) {
+        switch (operator) {
+            case "=":
+                return 1;
+            case "||":
+                return 2;
+            case "&&":
+                return 3;
+            case "==":
+            case "!=":
+                return 8;
+            case "<":
+            case "<=":
+            case ">":
+            case ">=":
+                return 9;
+            case "+":
+            case "-":
+                return 11;
+            case "*":
+            case "^":
+            case "/":
+            case "%":
+                return 12;
+            case "~":
+            case "!":
+                return 13;
+            default:
+                return -1;
+        }
+    }
+    private static boolean hasHigherOrEqualPrecedence(String op1, String op2) {
+        return getPrecedence(op1) >= getPrecedence(op2);
+    }
+
     public static boolean isStringValidInfix(String line) {
         if (!isStringBalanceParenthesis(line)) {
             return false;
@@ -80,56 +167,74 @@ public class Convertor {
             boolean previousWasOperator = false; // Handle negative operand.
             for (int i=0; i<tokens.size(); i++) {
                 String token = tokens.get(i);
-                if (isStringOpenParenthesis(token)) { // Before the '(' must be an Operator. After must be an Operand.
-                    if (!expectedOperator && !previousWasOperator) {
+
+                // Skip spaces
+                if (token.equals(" ")) {
+                    continue;
+                }
+
+                if (isStringOpenParenthesis(token)) { // Before the '(' must be an Operator or beginning of expression. After must be an Operand.
+                    if (!expectedOperand) {
                         return false;
                     }
                     expectedOperand = true;
                     expectedOperator = false;
                     previousWasOperator = false;
+                    continue;
                 }
                 if (isStringClosingParenthesis(token)) { // Before the ')' must be an Operand. After must be an Operator.
+                    if (expectedOperand) {
+                        return false;
+                    }
                     expectedOperand = false;
                     expectedOperator = true;
                     previousWasOperator = false;
-
+                    continue;
                 }
                 if (isStringOperand(token)) {
+                    if (!expectedOperand) {
+                        return false;
+                    }
+                    expectedOperand = false;
+                    expectedOperator = true;
+                    previousWasOperator = false;
+                    continue;
+                }
+                if (isStringSubtraction(token) && (i==0 || isStringOpenParenthesis(tokens.get(i-1)) || isStringOperator(tokens.get(i-1)))) {
+                    // Negative Numbers Handle
+                    expectedOperand = true;
+                    expectedOperator = false;
+                    previousWasOperator = true;
+                    continue;
                 }
                 if (isStringOperator(token)) {
-                    if (isStringSubtraction(token)) {
-                        expectedOperand = true;
-                        expectedOperator = false;
-                        previousWasOperator = true;
+                    if (!expectedOperator) {
+                        return false;
                     }
                     expectedOperand = true;
                     expectedOperator = false;
+                    previousWasOperator = true;
+                    continue;
                 }
+                return false;
             }
+            return !expectedOperand; // Valid Expression ends with Operand or Closing parenthesis
 
         } catch (Exception e) {
-
+            return false;
         }
-
-
-
-
-
-
-
-        return isStringBalanceParenthesis(line);
     }
-    public static boolean isStringBalanceParenthesis(String line) {
+    private static boolean isStringBalanceParenthesis(String line) {
         Stack parenthesisStack = new Stack();
 
         for (char c : line.toCharArray()) {
             if (isCharOpenParenthesis(c)) {
-                parenthesisStack.push(c);
+                parenthesisStack.push(String.valueOf(c));
             } else if (isCharClosingParenthesis(c)) {
                 if (parenthesisStack.isEmpty()) {
                     return false;
                 }
-                char pop = parenthesisStack.pop();
+                char pop = parenthesisStack.pop().charAt(0);
                 if (!isMatchingParenthesisPair(pop,c)) {
                     return false;
                 }
@@ -137,24 +242,24 @@ public class Convertor {
         }
         return parenthesisStack.isEmpty();
     }
-    public static boolean isMatchingParenthesisPair(char open, char close) {
+    private static boolean isMatchingParenthesisPair(char open, char close) {
         return (open=='(' && close==')') ||
                 (open=='[' && close==']') ||
                 (open=='{' && close=='}');
     }
-    public static boolean isCharOpenParenthesis(char c) {
+    private static boolean isCharOpenParenthesis(char c) {
         return (c=='(') || (c=='[') || (c=='{');
     }
-    public static boolean isStringOpenParenthesis(String s) {
+    private static boolean isStringOpenParenthesis(String s) {
         return (s.equals("(")) || (s.equals("[")) || (s.equals("{"));
     }
-    public static boolean isCharClosingParenthesis(char c) {
+    private static boolean isCharClosingParenthesis(char c) {
         return (c==')') || (c==']') || (c=='}');
     }
-    public static boolean isStringClosingParenthesis(String s) {
+    private static boolean isStringClosingParenthesis(String s) {
         return (s.equals(")")) || (s.equals("]")) || (s.equals("}"));
     }
-    public static boolean isCharSingleOperator(char c) {
+    private static boolean isCharSingleOperator(char c) {
         char[] operators = {'!', '+', '-', '*', '/', '%', '<', '>', '='};
         for (char op : operators) {
             if (c==op) {
@@ -163,8 +268,8 @@ public class Convertor {
         }
         return false;
     }
-    public static boolean isStringOperator(String s) {
-        String[] operators = {"!", "+", "-", "*", "/", "%", "<", ">", "=", "!=", ">=", "<=", "||", "&&"};
+    private static boolean isStringOperator(String s) {
+        String[] operators = {"!", "+", "-", "*", "/", "%", "<", ">", "==", "=", "!=", ">=", "<=", "||", "&&"};
         for (String o: operators) {
             if (s.equals(o)) {
                 return true;
@@ -172,21 +277,10 @@ public class Convertor {
         }
         return false;
     }
-    public static boolean isStringOperand(String s) {
+    private static boolean isStringOperand(String s) {
         return Character.isLetter(s.charAt(0)) || Character.isDigit(s.charAt(0));
     }
-    public static boolean isStringSubtraction(String s) {
+    private static boolean isStringSubtraction(String s) {
         return s.equals("-");
-    }
-
-    // For debugging
-    public void getToStringArrayListResult (ArrayList<String> input) {
-        for (String s: input) {
-            ArrayList<String> separatedList = toStringArrayListToken(s);
-            for (String ss : separatedList) {
-                System.out.print("(" + ss + "), ");
-            }
-            System.out.println();
-        }
     }
 }

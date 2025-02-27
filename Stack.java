@@ -6,7 +6,7 @@ public class Stack {
     }
 
     // Push, Pop and Peek:
-    public void push(char data) {
+    public void push(String data) {
         Node newNode = new Node(data);
         if (isEmpty()) {
             top = newNode;
@@ -15,15 +15,15 @@ public class Stack {
             top = newNode;
         }
     }
-    public char pop() {
+    public String pop() {
         if (isEmpty()) {
             throw new RuntimeException("The stack is empty. Cannot be popped.");
         }
-        char data = top.getData();
+        String data = top.getData();
         top = top.getNext();
         return data;
     }
-    public char peek() {
+    public String peek() {
         if (isEmpty()) {
             throw new RuntimeException("The stack is empty. Cannot be peeked.");
         }

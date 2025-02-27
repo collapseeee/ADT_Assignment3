@@ -1,19 +1,19 @@
 public class Node {
     // Attribute:
-    private char data;
+    private String data;
     private Node next;
 
     // Constructor:
-    public Node(char data) {
+    public Node(String data) {
         this.data = data;
         next = null;
     }
 
     // Method:
-    public void setData(char data) {
+    public void setData(String data) {
         this.data = data;
     }
-    public char getData(){
+    public String getData(){
         return this.data;
     }
     public void setNext(Node node){

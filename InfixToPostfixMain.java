@@ -31,11 +31,6 @@ public class InfixToPostfixMain {
             System.out.println("File name `" + fileName + "` not found");
         }
 
-        convertor.getToStringArrayListResult(inputList);
-    }
-    public static void printAllInList(ArrayList<String> list) {
-        for (String o : list) {
-            System.out.println(o);
-        }
+        convertor.getResult(inputList);
     }
 }
