@@ -12,7 +12,7 @@ public class Convertor {
         }
     }
 
-    public static ArrayList<String> toStringArrayList(String line) throws ArrayIndexOutOfBoundsException{ // To separate blank space, parenthesis, operand and operator in to each String in the ArrayList.
+    public static ArrayList<String> toStringArrayListToken(String line) throws ArrayIndexOutOfBoundsException { // To separate blank space, parenthesis, operand and operator in to each String in the ArrayList.
         ArrayList<String> expression = new ArrayList<>();
         int i = 0;
         while (i<line.length()) {
@@ -66,8 +66,50 @@ public class Convertor {
     }
 
     public static boolean isStringValidInfix(String line) {
+        if (!isStringBalanceParenthesis(line)) {
+            return false;
+        }
 
+        try {
+            ArrayList<String> tokens = toStringArrayListToken(line.trim()); // Ignore the whitespace.
+            if (tokens.isEmpty()) {
+                return true; // Empty token is valid.
+            }
+            boolean expectedOperand = true;
+            boolean expectedOperator = false;
+            boolean previousWasOperator = false; // Handle negative operand.
+            for (int i=0; i<tokens.size(); i++) {
+                String token = tokens.get(i);
+                if (isStringOpenParenthesis(token)) { // Before the '(' must be an Operator. After must be an Operand.
+                    if (!expectedOperator && !previousWasOperator) {
+                        return false;
+                    }
+                    expectedOperand = true;
+                    expectedOperator = false;
+                    previousWasOperator = false;
+                }
+                if (isStringClosingParenthesis(token)) { // Before the ')' must be an Operand. After must be an Operator.
+                    expectedOperand = false;
+                    expectedOperator = true;
+                    previousWasOperator = false;
 
+                }
+                if (isStringOperand(token)) {
+                }
+                if (isStringOperator(token)) {
+                    if (isStringSubtraction(token)) {
+                        expectedOperand = true;
+                        expectedOperator = false;
+                        previousWasOperator = true;
+                    }
+                    expectedOperand = true;
+                    expectedOperator = false;
+                }
+            }
+
+        } catch (Exception e) {
+
+        }
 
 
 
@@ -130,11 +172,17 @@ public class Convertor {
         }
         return false;
     }
+    public static boolean isStringOperand(String s) {
+        return Character.isLetter(s.charAt(0)) || Character.isDigit(s.charAt(0));
+    }
+    public static boolean isStringSubtraction(String s) {
+        return s.equals("-");
+    }
 
     // For debugging
     public void getToStringArrayListResult (ArrayList<String> input) {
         for (String s: input) {
-            ArrayList<String> separatedList = toStringArrayList(s);
+            ArrayList<String> separatedList = toStringArrayListToken(s);
             for (String ss : separatedList) {
                 System.out.print("(" + ss + "), ");
             }
